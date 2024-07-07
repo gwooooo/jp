@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Excel Search</title>
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        table, th, td {
+            border: 1px solid black;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+    <h1>Excel Search</h1>
+    <input type="file" id="upload" accept=".xlsx, .xls" />
+    <input type="text" id="search" placeholder="Search..." />
+    <button onclick="search()">Search</button>
+    <table id="resultTable">
+        <thead>
+            <tr>
+                <th>한국어 단어</th>
+                <th>일본어 자막</th>
+                <th>영어 발음</th>
+                <th>히라가나 발음</th>
+            </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.5/xlsx.full.min.js"></script>
+    <script>
+        let excelData = [];
+
+        document.getElementById('upload').addEventListener('change', handleFile, false);
+
+        function handleFile(e) {
+            const file = e.target.files[0];
+            const reader = new FileReader();
+
+            reader.onload = function(event) {
+                const data = new Uint8Array(event.target.result);
+                const workbook = XLSX.read(data, {type: 'array'});
+
+                // Assuming the first sheet is the one we want
+                const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                excelData = XLSX.utils.sheet_to_json(firstSheet, {header: 1});
+
+                // Display the table headers
+                displayTable(excelData.slice(1));
+            };
+
+            reader.readAsArrayBuffer(file);
+        }
+
+        function displayTable(data) {
+            const tableBody = document.getElementById('resultTable').getElementsByTagName('tbody')[0];
+            tableBody.innerHTML = ""; // Clear the table
+
+            data.forEach(row => {
+                const newRow = tableBody.insertRow();
+                row.forEach(cell => {
+                    const newCell = newRow.insertCell();
+                    const text = document.createTextNode(cell);
+                    newCell.appendChild(text);
+                });
+            });
+        }
+
+        function search() {
+            const keyword = document.getElementById('search').value.toLowerCase();
+            const filteredData = excelData.slice(1).filter(row => 
+                row.some(cell => cell && cell.toString().toLowerCase().includes(keyword))
+            );
+            displayTable(filteredData);
+        }
+    </script>
+</body>
+</html>
